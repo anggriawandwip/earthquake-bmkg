@@ -28,7 +28,7 @@ jobs:
         env:
           TOKEN_BOT: ${{ secrets.TOKEN_BOT }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python bot.py
+        run: python botbmkg.py
 
       - name: Simpan Log ID Terakhir
         run: |
