@@ -118,7 +118,7 @@ def cek_warning_bmkg():
                 #     kirim_telegram_foto(shakemap_url, pesan)
                 # else:
                 
-                    kirim_telegram_teks(pesan)
+                kirim_telegram_teks(pesan)
                 
                 if lat and lon:
                     kirim_telegram_lokasi(lat, lon)
