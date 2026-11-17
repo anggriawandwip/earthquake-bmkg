@@ -7,6 +7,8 @@ CHAT_ID = os.environ.get("CHAT_ID")
 URL_XML = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.xml"
 FILE_LOG = "last_id.txt"
 
+DEBUG_MODE : True
+
 def baca_last_id():
     if os.path.exists(FILE_LOG):
         try:
