@@ -6,6 +6,9 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
@@ -26,3 +29,10 @@ jobs:
           TOKEN_BOT: ${{ secrets.TOKEN_BOT }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python bot.py
+
+      - name: Simpan Log ID Terakhir
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add last_id.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update last_id.txt" && git push)
