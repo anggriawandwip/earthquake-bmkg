@@ -117,6 +117,7 @@ def cek_warning_bmkg():
                 #     shakemap_url = f"https://data.bmkg.go.id/DataMKG/TEWS/{shakemap_file}"
                 #     kirim_telegram_foto(shakemap_url, pesan)
                 # else:
+                
                     kirim_telegram_teks(pesan)
                 
                 if lat and lon:
