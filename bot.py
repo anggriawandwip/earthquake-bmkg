@@ -6,6 +6,7 @@ TOKEN_BOT = os.environ.get("TOKEN_BOT")
 CHAT_ID = os.environ.get("CHAT_ID")
 URL_XML = "https://bmkg-content-inatews.storage.googleapis.com/warninggeof.xml"
 
+# Variabel penyaring untuk mencegah pesan duplikat
 last_sent_id = None
 
 def kirim_telegram_teks(pesan):
@@ -31,24 +32,24 @@ def cek_warning_bmkg():
         if response.status_code == 200:
             root = ET.fromstring(response.content)
             
-            identifier = "INFO_BMKG"
-            headline = "Informasi Peringatan Dini Gempa"
-            description = "Tidak ada keterangan tambahan."
-            area_desc = "Wilayah Indonesia"
+            identifier = ""
+            headline = ""
+            description = ""
+            area_desc = ""
             lat = None
             lon = None
             
             for elem in root.iter():
-                tag = elem.tag.split('}')[-1] # Membersihkan namespace XML jika ada
-                if tag == "identifier" and elem.text:
-                    identifier = elem.text
-                elif tag == "headline" and elem.text:
-                    headline = elem.text
-                elif tag == "description" and elem.text:
-                    description = elem.text
-                elif tag == "areaDesc" and elem.text:
-                    area_desc = elem.text
-                elif tag == "point" and elem.text:
+                tag = elem.tag.split('}')[-1]
+                if tag == "identifier" and elem.text and not identifier:
+                    identifier = elem.text.strip()
+                elif tag == "headline" and elem.text and not headline:
+                    headline = elem.text.strip()
+                elif tag == "description" and elem.text and not description:
+                    description = elem.text.strip()
+                elif tag == "areaDesc" and elem.text and not area_desc:
+                    area_desc = elem.text.strip()
+                elif tag == "point" and elem.text and not lat:
                     coords = elem.text.strip().split()
                     if len(coords) >= 2:
                         try:
@@ -57,25 +58,26 @@ def cek_warning_bmkg():
                         except ValueError:
                             pass
             
-            # Kirim pesan untuk uji coba (mengabaikan filter last_sent_id agar langsung terkirim saat di-run)
-            pesan = (
-                "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
-                f"{headline}\n\n"
-                f"📝 *Deskripsi:* {description}\n\n"
-                f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
-                "_Sumber: InaTEWS BMKG_"
-            )
-            
-            kirim_telegram_teks(pesan)
-            
-            # Kirim titik lokasi default atau dari XML jika ada
-            if lat and lon:
-                kirim_telegram_lokasi(lat, lon)
-            else:
-                # Titik koordinat cadangan (misal: Jakarta) jika tag point di XML kosong
-                kirim_telegram_lokasi(-6.2088, 106.8456)
+            # Jika ditemukan data identifier dan ID-nya belum pernah dikirim sebelumnya
+            if identifier and identifier != last_sent_id:
+                last_sent_id = identifier
                 
-            print("Alert dan titik lokasi berhasil dikirim!")
+                pesan = (
+                    "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
+                    f"{headline}\n\n"
+                    f"{description}\n\n"
+                    f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
+                    "_Sumber: InaTEWS BMKG_"
+                )
+                
+                kirim_telegram_teks(pesan)
+                
+                if lat and lon:
+                    kirim_telegram_lokasi(lat, lon)
+                
+                print("Alert baru berhasil dikirim ke Telegram!")
+            else:
+                print("Tidak ada data peringatan baru atau ID masih sama.")
         else:
             print(f"Gagal mengambil XML, status code: {response.status_code}")
     except Exception as e:
