@@ -36,7 +36,6 @@ def kirim_telegram_foto(foto_url, caption):
     payload = {"chat_id": CHAT_ID, "photo": foto_url, "caption": caption, "parse_mode": "Markdown"}
     try:
         response = requests.post(url, json=payload, timeout=15)
-        # Jika gagal kirim foto (misal link gambar tidak valid), fallback kirim pesan teks biasa
         if response.status_code != 200:
             kirim_telegram_teks(caption)
     except Exception as e:
@@ -99,18 +98,19 @@ def cek_warning_bmkg():
                             lat = float(parts[0].strip())
                             lon = float(parts[1].strip())
 
+                # Format teks pesan diperbarui dengan menambahkan baris Koordinat
                 pesan = (
                     "🚨 *INFORMASI GEMPA TERBARU BMKG* 🚨\n\n"
                     f"📅 *Waktu:* {tanggal} | {jam}\n"
                     f"⚡ *Magnitudo:* {magnitude}\n"
                     f"🌊 *Kedalaman:* {kedalaman}\n"
+                    f"🌐 *Koordinat:* {lintang} - {bujur}\n"
                     f"📍 *Pusat Gempa:* {wilayah}\n"
                     f"👥 *Dirasakan:* {dirasakan}\n"
                     f"⚠️ *Potensi:* {potensi}\n\n"
                     "_Sumber: Data Resmi BMKG AutoGempa_"
                 )
                 
-                # Jika ada file Shakemap, kirim sebagai foto beserta caption informasi gempa
                 if shakemap_file:
                     shakemap_url = f"https://data.bmkg.go.id/DataMKG/TEWS/{shakemap_file}"
                     kirim_telegram_foto(shakemap_url, pesan)
@@ -122,7 +122,7 @@ def cek_warning_bmkg():
                 else:
                     kirim_telegram_lokasi(-6.2088, 106.8456)
                 
-                print(f"Gempa baru berhasil dikirim lengkap dengan Dirasakan & Shakemap! ID: {unique_id}")
+                print(f"Gempa baru berhasil dikirim lengkap dengan Koordinat! ID: {unique_id}")
             else:
                 print("Data gempa masih sama dengan sebelumnya. Tidak mengirim ulang.")
         else:
