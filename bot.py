@@ -6,7 +6,6 @@ TOKEN_BOT = os.environ.get("TOKEN_BOT")
 CHAT_ID = os.environ.get("CHAT_ID")
 URL_XML = "https://bmkg-content-inatews.storage.googleapis.com/warninggeof.xml"
 
-# Variabel penyaring untuk mencegah pesan duplikat
 last_sent_id = None
 
 def kirim_telegram_teks(pesan):
@@ -47,9 +46,14 @@ def cek_warning_bmkg():
                     headline = elem.text.strip()
                 elif tag == "description" and elem.text and not description:
                     description = elem.text.strip()
-                elif tag == "areaDesc" and elem.text and not area_desc:
-                    area_desc = elem.text.strip()
+                elif tag == "areaDesc" and elem.text:
+                    # Menampung teks areaDesc, jika lebih dari satu akan digabungkan
+                    if area_desc:
+                        area_desc += ", " + elem.text.strip()
+                    else:
+                        area_desc = elem.text.strip()
                 elif tag == "point" and elem.text and not lat:
+                    # Format point biasanya "lat lon" (contoh: "-6.92 106.95")
                     coords = elem.text.strip().split()
                     if len(coords) >= 2:
                         try:
@@ -58,14 +62,21 @@ def cek_warning_bmkg():
                         except ValueError:
                             pass
             
-            # Jika ditemukan data identifier dan ID-nya belum pernah dikirim sebelumnya
-            if identifier and identifier != last_sent_id:
+            # Jika identifier kosong, buat dummy agar tetap bisa terkirim saat testing
+            if not identifier:
+                identifier = "BMKG_EVENT"
+
+            if identifier != last_sent_id:
                 last_sent_id = identifier
                 
+                # Jika area_desc kosong, berikan keterangan default
+                if not area_desc:
+                    area_desc = "Wilayah Indonesia"
+
                 pesan = (
                     "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
-                    f"{headline}\n\n"
-                    f"{description}\n\n"
+                    f"📌 *Headline:* {headline}\n\n"
+                    f"📝 *Deskripsi:* {description}\n\n"
                     f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
                     "_Sumber: InaTEWS BMKG_"
                 )
@@ -75,9 +86,9 @@ def cek_warning_bmkg():
                 if lat and lon:
                     kirim_telegram_lokasi(lat, lon)
                 
-                print("Alert baru berhasil dikirim ke Telegram!")
+                print("Alert, wilayah, dan lokasi berhasil dikirim!")
             else:
-                print("Tidak ada data peringatan baru atau ID masih sama.")
+                print("Tidak ada data peringatan baru.")
         else:
             print(f"Gagal mengambil XML, status code: {response.status_code}")
     except Exception as e:
