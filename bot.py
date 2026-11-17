@@ -75,8 +75,8 @@ def cek_warning_bmkg():
 
                 pesan = (
                     "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
-                    f"📌 *Headline:* {headline}\n\n"
-                    f"📝 *Deskripsi:* {description}\n\n"
+                    f"{headline}\n\n"
+                    f"{description}\n\n"
                     f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
                     "_Sumber: InaTEWS BMKG_"
                 )
