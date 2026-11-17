@@ -7,8 +7,6 @@ CHAT_ID = os.environ.get("CHAT_ID")
 URL_XML = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.xml"
 FILE_LOG = "last_id.txt"
 
-DEBUG_MODE = True
-
 def baca_last_id():
     if os.path.exists(FILE_LOG):
         try:
@@ -113,12 +111,12 @@ def cek_warning_bmkg():
                     "_Sumber: Data Resmi BMKG AutoGempa_"
                 )
                 
-                # if shakemap_file:
-                #     shakemap_url = f"https://data.bmkg.go.id/DataMKG/TEWS/{shakemap_file}"
-                #     kirim_telegram_foto(shakemap_url, pesan)
-                # else:
+                if shakemap_file:
+                    shakemap_url = f"https://data.bmkg.go.id/DataMKG/TEWS/{shakemap_file}"
+                    kirim_telegram_foto(shakemap_url, pesan)
+                else:
                 
-                kirim_telegram_teks(pesan)
+                    kirim_telegram_teks(pesan)
                 
                 if lat and lon:
                     kirim_telegram_lokasi(lat, lon)
