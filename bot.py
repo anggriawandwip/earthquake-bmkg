@@ -6,7 +6,6 @@ TOKEN_BOT = os.environ.get("TOKEN_BOT")
 CHAT_ID = os.environ.get("CHAT_ID")
 URL_XML = "https://bmkg-content-inatews.storage.googleapis.com/warninggeof.xml"
 
-# Variabel sederhana untuk mencegah pesan duplikat dalam satu kali run
 last_sent_id = None
 
 def kirim_telegram_teks(pesan):
@@ -32,51 +31,53 @@ def cek_warning_bmkg():
         if response.status_code == 200:
             root = ET.fromstring(response.content)
             
-            identifier = ""
-            headline = ""
-            description = ""
-            area_desc = ""
+            identifier = "INFO_BMKG"
+            headline = "Informasi Peringatan Dini Gempa"
+            description = "Tidak ada keterangan tambahan."
+            area_desc = "Wilayah Indonesia"
             lat = None
             lon = None
             
             for elem in root.iter():
-                if elem.tag.endswith("identifier") and not identifier:
+                tag = elem.tag.split('}')[-1] # Membersihkan namespace XML jika ada
+                if tag == "identifier" and elem.text:
                     identifier = elem.text
-                elif elem.tag.endswith("headline") and not headline:
+                elif tag == "headline" and elem.text:
                     headline = elem.text
-                elif elem.tag.endswith("description") and not description:
+                elif tag == "description" and elem.text:
                     description = elem.text
-                elif elem.tag.endswith("areaDesc") and not area_desc:
+                elif tag == "areaDesc" and elem.text:
                     area_desc = elem.text
-                # Format CAP biasanya menyimpan titik koordinat dalam tag <point> "lat lon"
-                elif elem.tag.endswith("point") and not lat:
-                    coords = elem.text.split()
+                elif tag == "point" and elem.text:
+                    coords = elem.text.strip().split()
                     if len(coords) >= 2:
-                        lat = float(coords[0])
-                        lon = float(coords[1])
+                        try:
+                            lat = float(coords[0])
+                            lon = float(coords[1])
+                        except ValueError:
+                            pass
             
-            # Jika ada headline dan datanya baru (belum dikirim sebelumnya)
-            if headline and identifier != last_sent_id:
-                last_sent_id = identifier
-                
-                pesan = (
-                    "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
-                    f"{headline}\n\n"
-                    f"📝 *Deskripsi:* {description}\n\n"
-                    f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
-                    "_Sumber: InaTEWS BMKG_"
-                )
-                
-                # Kirim pesan teks detail gempa
-                kirim_telegram_teks(pesan)
-                
-                # Kirim titik lokasi peta jika koordinat ditemukan
-                if lat and lon:
-                    kirim_telegram_lokasi(lat, lon)
-                    
-                print("Alert dan titik lokasi berhasil dikirim!")
+            # Kirim pesan untuk uji coba (mengabaikan filter last_sent_id agar langsung terkirim saat di-run)
+            pesan = (
+                "🚨 *PERINGATAN DINI / WARNING GEMPA BMKG* 🚨\n\n"
+                f"{headline}\n\n"
+                f"📝 *Deskripsi:* {description}\n\n"
+                f"📍 *Wilayah Terdampak:* {area_desc}\n\n"
+                "_Sumber: InaTEWS BMKG_"
+            )
+            
+            kirim_telegram_teks(pesan)
+            
+            # Kirim titik lokasi default atau dari XML jika ada
+            if lat and lon:
+                kirim_telegram_lokasi(lat, lon)
             else:
-                print("Tidak ada data peringatan baru.")
+                # Titik koordinat cadangan (misal: Jakarta) jika tag point di XML kosong
+                kirim_telegram_lokasi(-6.2088, 106.8456)
+                
+            print("Alert dan titik lokasi berhasil dikirim!")
+        else:
+            print(f"Gagal mengambil XML, status code: {response.status_code}")
     except Exception as e:
         print(f"Error: {e}")
 
