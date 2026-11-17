@@ -31,6 +31,18 @@ def kirim_telegram_teks(pesan):
     except Exception as e:
         print(f"Error Telegram Teks: {e}")
 
+def kirim_telegram_foto(foto_url, caption):
+    url = f"https://api.telegram.org/bot{TOKEN_BOT}/sendPhoto"
+    payload = {"chat_id": CHAT_ID, "photo": foto_url, "caption": caption, "parse_mode": "Markdown"}
+    try:
+        response = requests.post(url, json=payload, timeout=15)
+        # Jika gagal kirim foto (misal link gambar tidak valid), fallback kirim pesan teks biasa
+        if response.status_code != 200:
+            kirim_telegram_teks(caption)
+    except Exception as e:
+        print(f"Error Telegram Foto: {e}")
+        kirim_telegram_teks(caption)
+
 def kirim_telegram_lokasi(lat, lon):
     url = f"https://api.telegram.org/bot{TOKEN_BOT}/sendLocation"
     payload = {"chat_id": CHAT_ID, "latitude": lat, "longitude": lon}
@@ -46,7 +58,6 @@ def cek_warning_bmkg():
         if response.status_code == 200:
             root = ET.fromstring(response.content)
             
-            # Struktur autogempa.xml berada di dalam elemen <gempa> di dalam <Infogempa>
             gempa_elem = root.find("gempa")
             if not gempa_elem:
                 print("Format XML tidak sesuai.")
@@ -62,17 +73,16 @@ def cek_warning_bmkg():
             kedalaman = gempa_elem.findtext("Kedalaman", "").strip()
             wilayah = gempa_elem.findtext("Wilayah", "").strip()
             potensi = gempa_elem.findtext("Potensi", "").strip()
+            dirasakan = gempa_elem.findtext("Dirasakan", "-").strip()
+            shakemap_file = gempa_elem.findtext("Shakemap", "").strip()
             
-            # Gunakan DateTime atau kombinasi Tanggal+Jam sebagai ID unik gempa
             unique_id = datetime_val if datetime_val else f"{tanggal}_{jam}"
 
             if unique_id and unique_id != last_sent_id:
                 simpan_last_id(unique_id)
                 
-                # Parsing koordinat Lintang & Bujur untuk dikirim ke Telegram Maps
                 lat, lon = None, None
                 try:
-                    # Format Lintang biasanya "7.94 LS", Bujur "106.87 BT"
                     if "LS" in lintang:
                         lat = -float(lintang.replace("LS", "").strip())
                     elif "LU" in lintang:
@@ -83,7 +93,6 @@ def cek_warning_bmkg():
                     elif "BB" in bujur:
                         lon = -float(bujur.replace("BB", "").strip())
                 except Exception:
-                    # Fallback jika parsing gagal menggunakan string coordinates (misal: "-7.94,106.87")
                     if coordinates:
                         parts = coordinates.split(",")
                         if len(parts) == 2:
@@ -96,18 +105,24 @@ def cek_warning_bmkg():
                     f"⚡ *Magnitudo:* {magnitude}\n"
                     f"🌊 *Kedalaman:* {kedalaman}\n"
                     f"📍 *Pusat Gempa:* {wilayah}\n"
+                    f"👥 *Dirasakan:* {dirasakan}\n"
                     f"⚠️ *Potensi:* {potensi}\n\n"
                     "_Sumber: Data Resmi BMKG AutoGempa_"
                 )
                 
-                kirim_telegram_teks(pesan)
+                # Jika ada file Shakemap, kirim sebagai foto beserta caption informasi gempa
+                if shakemap_file:
+                    shakemap_url = f"https://data.bmkg.go.id/DataMKG/TEWS/{shakemap_file}"
+                    kirim_telegram_foto(shakemap_url, pesan)
+                else:
+                    kirim_telegram_teks(pesan)
                 
                 if lat and lon:
                     kirim_telegram_lokasi(lat, lon)
                 else:
                     kirim_telegram_lokasi(-6.2088, 106.8456)
                 
-                print(f"Gempa baru berhasil dikirim! ID: {unique_id}")
+                print(f"Gempa baru berhasil dikirim lengkap dengan Dirasakan & Shakemap! ID: {unique_id}")
             else:
                 print("Data gempa masih sama dengan sebelumnya. Tidak mengirim ulang.")
         else:
