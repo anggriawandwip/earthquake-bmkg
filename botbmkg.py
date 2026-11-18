@@ -100,15 +100,15 @@ def cek_warning_bmkg():
 
                 # Format teks pesan diperbarui dengan menambahkan baris Koordinat
                 pesan = (
-                    "🚨 *INFORMASI GEMPA TERBARU BMKG* 🚨\n\n"
+                    "🚨 *INFORMASI GEMPA BMKG* 🚨\n\n"
                     f"📅 *Waktu :* {tanggal}, {jam}\n"
                     f"⚡ *Magnitudo :* {magnitude}\n"
                     f"🌊 *Kedalaman :* {kedalaman}\n"
-                    f"🌐 *Koordinat :* {lintang} - {bujur}\n"
+                    f"🌐 *Koordinat :* {lintang}, {bujur}\n"
                     f"📍 *Pusat Gempa :* {wilayah}\n"
                     f"👥 *Dirasakan :* {dirasakan}\n"
                     f"⚠️ *Potensi :* {potensi}\n\n"
-                    "_Sumber: Data Resmi BMKG AutoGempa_"
+                    "_Sumber: Data Resmi BMKG_"
                 )
                 
                 if shakemap_file:
