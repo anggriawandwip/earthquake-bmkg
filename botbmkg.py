@@ -105,8 +105,7 @@ def cek_warning_bmkg():
                     f"⚡ *Magnitudo :* {magnitude}\n"
                     f"🌊 *Kedalaman :* {kedalaman}\n"
                     f"🌐 *Koordinat :* {lintang}, {bujur}\n"
-                    f"📍 *Pusat Gempa :* {wilayah}\n"
-                    f"👥 *Dirasakan :* {dirasakan}\n"
+                    f"{wilayah}\n"
                     f"⚠️ *Potensi :* {potensi}\n\n"
                     "_Sumber: Data Resmi BMKG_"
                 )
